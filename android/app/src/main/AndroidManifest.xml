@@ -1,11 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Permission pour la fenêtre flottante -->
+    <!-- Permissions pour la fenêtre flottante -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     
     <application
         android:label="Teleprompter Pro"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        
+        <!-- ✅ LE SERVICE MANQUANT EST ICI -->
+        <service
+            android:name="flutter_overlay_window.OverlayService"
+            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
