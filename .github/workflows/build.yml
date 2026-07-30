@@ -1,0 +1,35 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          
+      - name: Installer les dépendances
+        run: flutter pub get
+        
+      - name: Construire l'APK
+        run: flutter build apk --release
+        
+      - name: Mettre à disposition l'application
+        uses: actions/upload-artifact@v3
+        with:
+          name: teleprompter-app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
