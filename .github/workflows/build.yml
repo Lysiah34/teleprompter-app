@@ -21,6 +21,21 @@ jobs:
         with:
           flutter-version: '3.19.0'
           channel: 'stable'
+
+      - name: Générer la structure Android native
+        run: |
+          # 1. On sauvegarde temporairement tes fichiers personnalisés
+          cp lib/main.dart main_backup.dart
+          cp pubspec.yaml pubspec_backup.yaml
+          cp android/app/src/main/AndroidManifest.xml manifest_backup.xml
+          
+          # 2. On demande à Flutter de créer tous les fichiers Android manquants
+          flutter create --platforms android .
+          
+          # 3. On remet tes fichiers par-dessus la structure toute neuve
+          mv main_backup.dart lib/main.dart
+          mv pubspec_backup.yaml pubspec.yaml
+          mv manifest_backup.xml android/app/src/main/AndroidManifest.xml
           
       - name: Installer les dépendances
         run: flutter pub get
