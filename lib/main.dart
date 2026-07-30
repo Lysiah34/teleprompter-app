@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// --- POINT D'ENTRÉE DE LA FENÊTRE FLOTTANTE ---
 @pragma("vm:entry-point")
 void overlayMain() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +12,6 @@ void overlayMain() {
   ));
 }
 
-// --- POINT D'ENTRÉE DE L'APP PRINCIPALE ---
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MaterialApp(
@@ -22,7 +20,6 @@ void main() {
   ));
 }
 
-// --- ÉCRAN PRINCIPAL (Gestion du script) ---
 class MainApp extends StatefulWidget {
   const MainApp({Key? key}) : super(key: key);
 
@@ -42,7 +39,7 @@ class _MainAppState extends State<MainApp> {
   Future<void> _loadScript() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _scriptController.text = prefs.getString('saved_script') ?? 'Tapez votre script ici...';
+      _scriptController.text = prefs.getString('saved_script') ?? '';
     });
   }
 
@@ -54,28 +51,35 @@ class _MainAppState extends State<MainApp> {
   Future<void> _launchOverlay() async {
     await _saveScript();
     
-    // Vérification de la permission Android "Afficher par-dessus"
-    bool isGranted = await FlutterOverlayWindow.isPermissionGranted();
-    if (!isGranted) {
-      await FlutterOverlayWindow.requestPermission();
-      return;
+    try {
+      bool isGranted = await FlutterOverlayWindow.isPermissionGranted();
+      if (!isGranted) {
+        await FlutterOverlayWindow.requestPermission();
+        return;
+      }
+      
+      // Sécurité : Ferme la fenêtre si elle est déjà ouverte en arrière-plan
+      bool isActive = await FlutterOverlayWindow.isActive();
+      if (isActive) {
+        await FlutterOverlayWindow.closeOverlay();
+      }
+      
+      await FlutterOverlayWindow.shareData(_scriptController.text);
+      
+      await FlutterOverlayWindow.showOverlay(
+        enableDrag: true,
+        overlayTitle: "Téléprompteur",
+        overlayContent: "En attente...",
+        flag: OverlayFlag.defaultFlag,
+        alignment: OverlayAlignment.center,
+        visibility: NotificationVisibility.visibilityPublic,
+        positionGravity: PositionGravity.auto,
+        height: 600,
+        width: WindowSize.matchParent,
+      );
+    } catch (e) {
+      print("Erreur de lancement : $e");
     }
-    
-    // Partage du texte avec la bulle flottante
-    await FlutterOverlayWindow.shareData(_scriptController.text);
-    
-    // Lancement de la bulle
-    await FlutterOverlayWindow.showOverlay(
-      enableDrag: true,
-      overlayTitle: "Téléprompteur",
-      overlayContent: "En attente...",
-      flag: OverlayFlag.defaultFlag,
-      alignment: OverlayAlignment.center,
-      visibility: NotificationVisibility.visibilityPublic,
-      positionGravity: PositionGravity.auto,
-      height: 600,
-      width: WindowSize.matchParent,
-    );
   }
 
   @override
@@ -115,7 +119,7 @@ class _MainAppState extends State<MainApp> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: _launchOverlay,
-                child: const Text('LANCER LE TÉLÉPROMPTEUR', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text('LANCER LE TÉLÉPROMPTEUR', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             )
           ],
@@ -125,7 +129,6 @@ class _MainAppState extends State<MainApp> {
   }
 }
 
-// --- WIDGET FLOTTANT (L'Overlay) ---
 class OverlayWidget extends StatefulWidget {
   const OverlayWidget({Key? key}) : super(key: key);
 
@@ -136,7 +139,7 @@ class OverlayWidget extends StatefulWidget {
 class _OverlayWidgetState extends State<OverlayWidget> {
   String scriptText = "Chargement...";
   bool isPlaying = false;
-  double scrollSpeed = 1.0; // Vitesse de base
+  double scrollSpeed = 1.0;
   final ScrollController _scrollController = ScrollController();
   Timer? _scrollTimer;
 
@@ -168,7 +171,7 @@ class _OverlayWidgetState extends State<OverlayWidget> {
         if (currentScroll < maxScroll) {
           _scrollController.jumpTo(currentScroll + scrollSpeed);
         } else {
-          _togglePlay(); // Stop à la fin
+          _togglePlay();
         }
       }
     });
@@ -185,13 +188,12 @@ class _OverlayWidgetState extends State<OverlayWidget> {
       color: Colors.transparent,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.65), // Transparence pour voir la caméra
+          color: Colors.black.withOpacity(0.65),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.blueAccent, width: 2),
         ),
         child: Column(
           children: [
-            // Zone de texte déroulante
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -199,19 +201,18 @@ class _OverlayWidgetState extends State<OverlayWidget> {
                   controller: _scrollController,
                   child: Column(
                     children: [
-                      const SizedBox(height: 50), // Espace avant de démarrer
+                      const SizedBox(height: 50),
                       Text(
                         scriptText,
                         style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, height: 1.5),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 200), // Espace pour la fin
+                      const SizedBox(height: 200),
                     ],
                   ),
                 ),
               ),
             ),
-            // Barre de contrôles compacte
             Container(
               color: Colors.black87,
               padding: const EdgeInsets.symmetric(vertical: 8),
