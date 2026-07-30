@@ -1,0 +1,16 @@
+name: teleprompter_app
+description: Téléprompteur avec fenêtre flottante
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_overlay_window: ^0.8.0
+  shared_preferences: ^2.2.2
+
+flutter:
+  uses-material-design: true
